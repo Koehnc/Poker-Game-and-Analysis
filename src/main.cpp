@@ -3,6 +3,7 @@
 #include "ranges/Range.h"
 #include "evaluators/MonteCarloEvaluator.h"
 #include "ga/Population.h"
+#include "ga/GenomeSerializer.h"
 
 #include <iostream>
 #include <vector>
@@ -23,6 +24,8 @@ int main(int argc, char* argv[]) {
             pop.nextGeneration();
             std::cout << "Gen " << pop.generation() << " best fitness: " << pop.best().fitness << "\n";
         }
+        poker::GenomeSerializer::save(pop.best().genome, "data/Ranges/GeneticAlgorithm/best.genome");
+        std::cout << "Best genome saved to data/Ranges/GeneticAlgorithm/best.genome\n";
     }
 
 
