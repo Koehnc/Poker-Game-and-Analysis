@@ -33,3 +33,6 @@ if(Qt6_FOUND)
 else()
     message(STATUS "Qt6 not found — poker-ui target skipped")
 endif()
+
+# Genome serializer test
+add_executable(test-genome tests/test_genome_serializer.cpp ${CORE_SOURCES})
