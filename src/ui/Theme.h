@@ -287,7 +287,7 @@ QLabel#seatBadge {
     border-radius: 8px;
     padding: 2px 7px;
     min-width: 16px;
-    max-width: 26px;
+    max-width: 46px;
 }
 
 /* ─────────────────────────── History log ───────────────────────────────── */

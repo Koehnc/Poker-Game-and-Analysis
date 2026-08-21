@@ -59,16 +59,16 @@ namespace poker
         int amount; // only used for Bet/Raise
     };
 
-    struct ActionRecord 
+    struct ActionRecord
     {
-        int playerId;
-        Round round;         // preflop, flop, turn, river
-        ActionType action;  // Fold, Call, Raise, Check
-        int amount;        // for bets/raises
+        int playerId = 0;
+        Round round = Round::Preflop;         // preflop, flop, turn, river
+        ActionType action = ActionType::Fold;  // Fold, Call, Raise, Check
+        int amount = 0;        // for bets/raises
 
-        int pot;
-        int lastAggressor;
-        int lastStreetAggressor;
+        int pot = 0;
+        int lastAggressor = -1;
+        int lastStreetAggressor = -1;
     };
 
     struct GameStateView

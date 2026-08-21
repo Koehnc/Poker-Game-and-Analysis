@@ -3,6 +3,11 @@
 
 namespace poker {
 
+namespace {
+    constexpr int kOpponentActionPauseMs = 600;
+    constexpr int kStreetDealtPauseMs = 800;
+}
+
 GameController::GameController(std::vector<std::unique_ptr<IStrategy>> strategies,
                                int startingChips,
                                int humanIndex,
@@ -16,17 +21,19 @@ GameController::GameController(std::vector<std::unique_ptr<IStrategy>> strategie
     mPoker->setStepCallback([this](const HandStep& step) {
         emit stepOccurred(step);
 
+        if (!mRunning.load()) return;   // stopping — don't pace, drain fast
+
         if (step.kind == StepKind::PlayerActed && step.action.playerId != mHumanIndex) {
-            QThread::msleep(600);
+            QThread::msleep(kOpponentActionPauseMs);
         } else if (step.kind == StepKind::StreetDealt) {
-            QThread::msleep(800);
+            QThread::msleep(kStreetDealtPauseMs);
         }
     });
 }
 
 void GameController::run() {
-    mRunning = true;
-    while (mRunning) {
+    mRunning.store(true);
+    while (mRunning.load()) {
         int winner = mPoker->simHand();
 
         QVector<int> chips;
@@ -41,7 +48,7 @@ void GameController::run() {
 }
 
 void GameController::stop() {
-    mRunning = false;
+    mRunning.store(false);
 }
 
 } // namespace poker

@@ -4,6 +4,7 @@
 #include "ui/HumanStrategy.h"
 #include <QObject>
 #include <QVector>
+#include <atomic>
 #include <memory>
 #include <vector>
 
@@ -30,7 +31,7 @@ private:
     std::unique_ptr<Poker> mPoker;
     int                    mNumPlayers;
     int                    mHumanIndex;
-    bool                   mRunning = false;
+    std::atomic<bool>      mRunning{false};
 };
 
 } // namespace poker

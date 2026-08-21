@@ -99,7 +99,7 @@ void MainWindow::stopGame() {
 
     // Unblock HumanStrategy if it's waiting on a CV for user input.
     if (mHumanStrat)
-        mHumanStrat->provideAction(Action{ActionType::Fold, 0});
+        mHumanStrat->abort();
 
     if (mController) mController->stop();
     mGameThread->quit();

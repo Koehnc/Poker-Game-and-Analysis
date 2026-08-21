@@ -245,6 +245,8 @@ GameWidget::GameWidget(QStringList playerNames, int humanIndex, QWidget* parent)
     mHistoryLog = new QListWidget(this);
     mHistoryLog->setObjectName("historyLog");
     mHistoryLog->setFixedWidth(220);
+    mHistoryLog->setSelectionMode(QAbstractItemView::NoSelection);
+    mHistoryLog->setFocusPolicy(Qt::NoFocus);
     outer->addWidget(mHistoryLog);
 }
 
@@ -263,11 +265,13 @@ void GameWidget::refreshBoard(int pot, const std::vector<Card>& board) {
 void GameWidget::updateBadges(int dealerIndex) {
     int n = mPlayerNames.size();
     auto badgeFor = [dealerIndex, n](int playerIndex) -> QString {
-        int offset = ((playerIndex - dealerIndex) % n + n) % n;
-        if (offset == 0) return "D";
-        if (offset == 1) return "SB";
-        if (offset == 2) return "BB";
-        return "";
+        int sb = (dealerIndex + 1) % n;
+        int bb = (dealerIndex + 2) % n;
+        QStringList parts;
+        if (playerIndex == dealerIndex) parts << "D";
+        if (playerIndex == sb)          parts << "SB";
+        if (playerIndex == bb)          parts << "BB";
+        return parts.join('/');
     };
 
     for (int k = 0; k < mOpponentIndices.size(); ++k) {
@@ -288,7 +292,7 @@ void GameWidget::logAction(const ActionRecord& record) {
         case ActionType::Fold:  line = QString("%1 folds").arg(name); break;
         case ActionType::Check: line = QString("%1 checks").arg(name); break;
         case ActionType::Call:  line = QString("%1 calls $%2").arg(name).arg(record.amount); break;
-        case ActionType::Raise: line = QString("%1 raises to $%2").arg(name).arg(record.amount); break;
+        case ActionType::Raise: line = QString("%1 raises $%2").arg(name).arg(record.amount); break;
     }
     mHistoryLog->addItem(line);
     mHistoryLog->scrollToBottom();
@@ -341,9 +345,12 @@ void GameWidget::onStepOccurred(poker::HandStep step) {
         case StepKind::StreetDealt:
             logStreet(step.round, step.board);
             break;
-        case StepKind::PlayerActed:
+        case StepKind::PlayerActed: {
             logAction(step.action);
+            QString actorName = (step.action.playerId < mPlayerNames.size()) ? mPlayerNames[step.action.playerId] : "Player";
+            mStatusLabel->setText(QString("%1 acting...").arg(actorName));
             break;
+        }
     }
 }
 
@@ -358,14 +365,11 @@ void GameWidget::onHandComplete(int winner, QVector<int> chipCounts) {
     for (auto* card : mHumanCards) setCardBack(card);
 
     // Update chip labels
-    int opponentIdx = 0;
-    for (int i = 0; i < mPlayerNames.size(); ++i) {
-        if (i == mHumanIndex) {
-            mHumanChipsLabel->setText(
-                QString("You (%1)   $%2").arg(mPlayerNames[i]).arg(chipCounts[i]));
-        } else if (opponentIdx < mChipLabels.size()) {
-            mChipLabels[opponentIdx++]->setText(QString("$%1").arg(chipCounts[i]));
-        }
+    mHumanChipsLabel->setText(
+        QString("You (%1)   $%2").arg(mPlayerNames[mHumanIndex]).arg(chipCounts[mHumanIndex]));
+
+    for (int k = 0; k < mOpponentIndices.size(); ++k) {
+        mChipLabels[k]->setText(QString("$%1").arg(chipCounts[mOpponentIndices[k]]));
     }
 }
 

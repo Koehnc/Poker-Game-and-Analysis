@@ -2,6 +2,7 @@
 #define POKER_H
 
 #include "game/Player.h"
+#include "game/VisibleInformation.h"
 #include "core/Deck.h"
 #include "core/Card.h"
 #include "strategies/IStrategy.h"

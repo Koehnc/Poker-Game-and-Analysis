@@ -202,10 +202,9 @@ namespace poker {
             int betSize = action.amount;
 
             streetHistory->emplace_back(ActionRecord{ j, round, action.type, action.amount, mPot, mPreviousStreetAggressor, mCurrentBetter } );
-            emitStep(StepKind::PlayerActed, round, &streetHistory->back());
 
             if (action.type == ActionType::Fold)
-            {   
+            {
                 if (!mQuiet) std::cout << "Player " << j+1 << " Folded" << std::endl;
                 mActivePlayers[j] = false;
                 --numActivePlayers;
@@ -234,6 +233,8 @@ namespace poker {
                 startingPosition = j;
                 i = j;
             }
+
+            emitStep(StepKind::PlayerActed, round, &streetHistory->back());
         }
 
         // Some of this might be redundant with restart
