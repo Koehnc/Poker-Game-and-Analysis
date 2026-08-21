@@ -277,6 +277,34 @@ QScrollBar::handle:vertical {
 }
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
 
+/* ────────────────────────────── Badges ─────────────────────────────────── */
+
+QLabel#seatBadge {
+    font-size: 10px;
+    font-weight: bold;
+    color: #0c0c11;
+    background-color: #c4991f;
+    border-radius: 8px;
+    padding: 2px 7px;
+    min-width: 16px;
+    max-width: 26px;
+}
+
+/* ─────────────────────────── History log ───────────────────────────────── */
+
+QListWidget#historyLog {
+    background-color: #111118;
+    border: 1px solid #1e2030;
+    border-radius: 10px;
+    padding: 8px;
+}
+QListWidget#historyLog::item {
+    color: #a8a294;
+    font-size: 12px;
+    padding: 3px 2px;
+    border: none;
+}
+
 )");
 }
 
