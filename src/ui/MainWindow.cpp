@@ -79,11 +79,12 @@ void MainWindow::onGameStartRequested(QVector<poker::PlayerConfig> players, int 
     mStack->addWidget(mGameWidget);
     mStack->setCurrentWidget(mGameWidget);
 
-    mController = new GameController(std::move(strategies), startingChips);
+    mController = new GameController(std::move(strategies), startingChips, humanIndex);
     mGameThread = new QThread(this);
     mController->moveToThread(mGameThread);
 
     connect(mGameThread,  &QThread::started,              mController,  &GameController::run);
+    connect(mController,  &GameController::stepOccurred,  mGameWidget,  &GameWidget::onStepOccurred);
     connect(mController,  &GameController::handComplete,  mGameWidget,  &GameWidget::onHandComplete);
     connect(mController,  &GameController::gameOver,      mGameThread,  &QThread::quit);
 

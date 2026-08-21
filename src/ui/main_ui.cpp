@@ -12,6 +12,7 @@ int main(int argc, char* argv[]) {
 
     qRegisterMetaType<poker::Action>("poker::Action");
     qRegisterMetaType<poker::GameStateView>("poker::GameStateView");
+    qRegisterMetaType<poker::HandStep>("poker::HandStep");
     qRegisterMetaType<poker::PlayerConfig>("poker::PlayerConfig");
     qRegisterMetaType<QVector<poker::PlayerConfig>>("QVector<poker::PlayerConfig>");
 
