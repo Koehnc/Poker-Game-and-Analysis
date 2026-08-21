@@ -5,11 +5,23 @@ namespace poker {
 
 GameController::GameController(std::vector<std::unique_ptr<IStrategy>> strategies,
                                int startingChips,
+                               int humanIndex,
                                QObject* parent)
     : QObject(parent),
-      mNumPlayers(static_cast<int>(strategies.size()))
+      mNumPlayers(static_cast<int>(strategies.size())),
+      mHumanIndex(humanIndex)
 {
     mPoker = std::make_unique<Poker>(std::move(strategies), startingChips, /*quiet=*/true);
+
+    mPoker->setStepCallback([this](const HandStep& step) {
+        emit stepOccurred(step);
+
+        if (step.kind == StepKind::PlayerActed && step.action.playerId != mHumanIndex) {
+            QThread::msleep(600);
+        } else if (step.kind == StepKind::StreetDealt) {
+            QThread::msleep(800);
+        }
+    });
 }
 
 void GameController::run() {

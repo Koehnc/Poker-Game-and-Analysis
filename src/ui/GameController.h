@@ -14,6 +14,7 @@ class GameController : public QObject {
 public:
     GameController(std::vector<std::unique_ptr<IStrategy>> strategies,
                    int startingChips,
+                   int humanIndex,
                    QObject* parent = nullptr);
 
 public slots:
@@ -21,12 +22,14 @@ public slots:
     void stop();
 
 signals:
+    void stepOccurred(poker::HandStep step);
     void handComplete(int winner, QVector<int> chipCounts);
     void gameOver();
 
 private:
     std::unique_ptr<Poker> mPoker;
     int                    mNumPlayers;
+    int                    mHumanIndex;
     bool                   mRunning = false;
 };
 

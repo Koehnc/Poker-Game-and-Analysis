@@ -4,3 +4,4 @@
 
 Q_DECLARE_METATYPE(poker::Action)
 Q_DECLARE_METATYPE(poker::GameStateView)
+Q_DECLARE_METATYPE(poker::HandStep)
