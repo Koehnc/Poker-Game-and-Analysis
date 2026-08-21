@@ -4,6 +4,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QFrame>
+#include <QListWidget>
 
 namespace poker {
 
@@ -20,8 +21,27 @@ QFrame* GameWidget::makeCardWidget(QWidget* parent) {
     return frame;
 }
 
+QString GameWidget::cardShortText(const Card& c) {
+    QString rank;
+    switch (c.getRank()) {
+        case 14: rank = "A"; break;
+        case 13: rank = "K"; break;
+        case 12: rank = "Q"; break;
+        case 11: rank = "J"; break;
+        default: rank = QString::number(c.getRank());
+    }
+    QString suit;
+    switch (c.getSuit()) {
+        case 0: suit = "♣"; break;
+        case 1: suit = "♦"; break;
+        case 2: suit = "♥"; break;
+        case 3: suit = "♠"; break;
+        default: suit = "?";
+    }
+    return rank + suit;
+}
+
 void GameWidget::setCardFace(QFrame* card, const Card& c) {
-    // Rank text
     QString rank;
     switch (c.getRank()) {
         case 14: rank = "A"; break;
@@ -31,7 +51,6 @@ void GameWidget::setCardFace(QFrame* card, const Card& c) {
         default: rank = QString::number(c.getRank());
     }
 
-    // Suit text and color
     QString suit, color;
     switch (c.getSuit()) {
         case 0: suit = "♣"; color = "#1a1a1a"; break;  // clubs
@@ -84,9 +103,14 @@ void GameWidget::clearCard(QFrame* card) {
 GameWidget::GameWidget(QStringList playerNames, int humanIndex, QWidget* parent)
     : QWidget(parent), mHumanIndex(humanIndex), mPlayerNames(playerNames)
 {
-    auto* root = new QVBoxLayout(this);
+    auto* outer = new QHBoxLayout(this);
+    outer->setSpacing(14);
+    outer->setContentsMargins(20, 16, 20, 14);
+
+    auto* tableCol = new QWidget(this);
+    auto* root = new QVBoxLayout(tableCol);
     root->setSpacing(10);
-    root->setContentsMargins(20, 16, 20, 14);
+    root->setContentsMargins(0, 0, 0, 0);
 
     // ── Opponent seats (top row) ───────────────────────────────────────────
     auto* opponentRow = new QHBoxLayout;
@@ -95,12 +119,17 @@ GameWidget::GameWidget(QStringList playerNames, int humanIndex, QWidget* parent)
     for (int i = 0; i < playerNames.size(); ++i) {
         if (i == humanIndex) continue;
 
-        auto* seat = new QFrame(this);
+        auto* seat = new QFrame(tableCol);
         seat->setObjectName("opponentSeat");
 
         auto* sl = new QVBoxLayout(seat);
         sl->setSpacing(5);
         sl->setContentsMargins(14, 12, 14, 12);
+
+        auto* badge = new QLabel("", seat);
+        badge->setObjectName("seatBadge");
+        badge->setAlignment(Qt::AlignCenter);
+        badge->setVisible(false);
 
         auto* nameL = new QLabel(playerNames[i], seat);
         nameL->setObjectName("nameLabel");
@@ -121,17 +150,20 @@ GameWidget::GameWidget(QStringList playerNames, int humanIndex, QWidget* parent)
         cardRow->addWidget(c1);
         cardRow->addWidget(c2);
 
+        sl->addWidget(badge);
         sl->addWidget(nameL);
         sl->addWidget(chipL);
         sl->addLayout(cardRow);
 
         opponentRow->addWidget(seat);
         mChipLabels.push_back(chipL);
+        mSeatBadges.push_back(badge);
+        mOpponentIndices.push_back(i);
     }
     root->addLayout(opponentRow);
 
     // ── Board (center oval) ────────────────────────────────────────────────
-    auto* boardFrame = new QFrame(this);
+    auto* boardFrame = new QFrame(tableCol);
     boardFrame->setObjectName("boardFrame");
 
     auto* boardLayout = new QVBoxLayout(boardFrame);
@@ -157,7 +189,7 @@ GameWidget::GameWidget(QStringList playerNames, int humanIndex, QWidget* parent)
     root->addWidget(boardFrame, 1);
 
     // ── Status bar ─────────────────────────────────────────────────────────
-    auto* statusBar = new QFrame(this);
+    auto* statusBar = new QFrame(tableCol);
     statusBar->setObjectName("statusBar");
     auto* statusLayout = new QHBoxLayout(statusBar);
     statusLayout->setContentsMargins(0, 0, 0, 0);
@@ -168,12 +200,17 @@ GameWidget::GameWidget(QStringList playerNames, int humanIndex, QWidget* parent)
     root->addWidget(statusBar);
 
     // ── Human seat (bottom) ────────────────────────────────────────────────
-    auto* humanFrame = new QFrame(this);
+    auto* humanFrame = new QFrame(tableCol);
     humanFrame->setObjectName("humanSeat");
 
     auto* humanLayout = new QHBoxLayout(humanFrame);
     humanLayout->setSpacing(18);
     humanLayout->setContentsMargins(20, 14, 20, 14);
+
+    mHumanBadge = new QLabel("", humanFrame);
+    mHumanBadge->setObjectName("seatBadge");
+    mHumanBadge->setAlignment(Qt::AlignCenter);
+    mHumanBadge->setVisible(false);
 
     auto* handRow = new QHBoxLayout;
     handRow->setSpacing(8);
@@ -191,29 +228,94 @@ GameWidget::GameWidget(QStringList playerNames, int humanIndex, QWidget* parent)
     mHumanChipsLabel->setObjectName("chipLabel");
     mHumanChipsLabel->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
 
+    humanLayout->addWidget(mHumanBadge);
     humanLayout->addLayout(handRow);
     humanLayout->addWidget(mHumanChipsLabel, 1);
     root->addWidget(humanFrame);
 
     // ── Action panel ───────────────────────────────────────────────────────
-    mActionPanel = new ActionPanel(this);
+    mActionPanel = new ActionPanel(tableCol);
     root->addWidget(mActionPanel);
 
     connect(mActionPanel, &ActionPanel::actionChosen, this, &GameWidget::actionChosen);
+
+    outer->addWidget(tableCol, 1);
+
+    // ── History log (right panel) ──────────────────────────────────────────
+    mHistoryLog = new QListWidget(this);
+    mHistoryLog->setObjectName("historyLog");
+    mHistoryLog->setFixedWidth(220);
+    outer->addWidget(mHistoryLog);
+}
+
+// ─── Shared update helpers ──────────────────────────────────────────────────
+
+void GameWidget::refreshBoard(int pot, const std::vector<Card>& board) {
+    mPotLabel->setText(QString("POT  —  $%1").arg(pot));
+    for (int i = 0; i < 5; ++i) {
+        if (i < static_cast<int>(board.size()))
+            setCardFace(mBoardCards[i], board[i]);
+        else
+            clearCard(mBoardCards[i]);
+    }
+}
+
+void GameWidget::updateBadges(int dealerIndex) {
+    int n = mPlayerNames.size();
+    auto badgeFor = [dealerIndex, n](int playerIndex) -> QString {
+        int offset = ((playerIndex - dealerIndex) % n + n) % n;
+        if (offset == 0) return "D";
+        if (offset == 1) return "SB";
+        if (offset == 2) return "BB";
+        return "";
+    };
+
+    for (int k = 0; k < mOpponentIndices.size(); ++k) {
+        QString text = badgeFor(mOpponentIndices[k]);
+        mSeatBadges[k]->setText(text);
+        mSeatBadges[k]->setVisible(!text.isEmpty());
+    }
+
+    QString humanText = badgeFor(mHumanIndex);
+    mHumanBadge->setText(humanText);
+    mHumanBadge->setVisible(!humanText.isEmpty());
+}
+
+void GameWidget::logAction(const ActionRecord& record) {
+    QString name = (record.playerId < mPlayerNames.size()) ? mPlayerNames[record.playerId] : "Player";
+    QString line;
+    switch (record.action) {
+        case ActionType::Fold:  line = QString("%1 folds").arg(name); break;
+        case ActionType::Check: line = QString("%1 checks").arg(name); break;
+        case ActionType::Call:  line = QString("%1 calls $%2").arg(name).arg(record.amount); break;
+        case ActionType::Raise: line = QString("%1 raises to $%2").arg(name).arg(record.amount); break;
+    }
+    mHistoryLog->addItem(line);
+    mHistoryLog->scrollToBottom();
+}
+
+void GameWidget::logStreet(Round round, const std::vector<Card>& board) {
+    QString label;
+    int newCardCount = 0;
+    switch (round) {
+        case Round::Flop:  label = "Flop";  newCardCount = 3; break;
+        case Round::Turn:  label = "Turn";  newCardCount = 1; break;
+        case Round::River: label = "River"; newCardCount = 1; break;
+        default: return;
+    }
+    QStringList cardStrs;
+    int start = static_cast<int>(board.size()) - newCardCount;
+    for (int i = start; i < static_cast<int>(board.size()); ++i)
+        cardStrs << cardShortText(board[i]);
+    mHistoryLog->addItem(QString("%1: %2").arg(label, cardStrs.join(' ')));
+    mHistoryLog->scrollToBottom();
 }
 
 // ─── Slots ─────────────────────────────────────────────────────────────────
 
 void GameWidget::onActionRequested(poker::GameStateView state) {
-    mPotLabel->setText(QString("POT  —  $%1").arg(state.pot));
-
-    // Community cards
-    for (int i = 0; i < 5; ++i) {
-        if (i < static_cast<int>(state.board.size()))
-            setCardFace(mBoardCards[i], state.board[i]);
-        else
-            clearCard(mBoardCards[i]);
-    }
+    refreshBoard(state.pot, state.board);
+    updateBadges(state.dealerIndex);
 
     // Hole cards
     for (int i = 0; i < 2; ++i) {
@@ -225,6 +327,24 @@ void GameWidget::onActionRequested(poker::GameStateView state) {
 
     mStatusLabel->setText("Your turn");
     mActionPanel->activate(state.minToCall, state.pot, state.playerStack);
+}
+
+void GameWidget::onStepOccurred(poker::HandStep step) {
+    refreshBoard(step.pot, step.board);
+    updateBadges(step.dealerIndex);
+
+    switch (step.kind) {
+        case StepKind::HandStarted:
+            mHistoryLog->clear();
+            mHistoryLog->addItem("— New hand —");
+            break;
+        case StepKind::StreetDealt:
+            logStreet(step.round, step.board);
+            break;
+        case StepKind::PlayerActed:
+            logAction(step.action);
+            break;
+    }
 }
 
 void GameWidget::onHandComplete(int winner, QVector<int> chipCounts) {
