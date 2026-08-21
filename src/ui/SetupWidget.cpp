@@ -10,41 +10,101 @@
 #include <QFileInfo>
 #include <QMessageBox>
 #include <QGroupBox>
+#include <QFrame>
 
 namespace poker {
 
 SetupWidget::SetupWidget(QWidget* parent) : QWidget(parent) {
     auto* root = new QVBoxLayout(this);
-    root->setSpacing(10);
+    root->setSpacing(0);
+    root->setContentsMargins(0, 0, 0, 0);
 
-    auto* title = new QLabel("Configure Table", this);
-    title->setStyleSheet("font-size: 18px; font-weight: bold;");
-    root->addWidget(title);
+    // ── Centred content column ─────────────────────────────────────────────
+    auto* outer = new QHBoxLayout;
+    outer->setContentsMargins(0, 0, 0, 0);
+    auto* col = new QVBoxLayout;
+    col->setSpacing(20);
+    col->setContentsMargins(0, 40, 0, 40);
+    outer->addStretch(1);
+    outer->addLayout(col, 0);
+    outer->addStretch(1);
+    root->addStretch(1);
+    root->addLayout(outer);
+    root->addStretch(1);
 
-    auto* slotsGroup = new QGroupBox("Players", this);
+    // ── Header ─────────────────────────────────────────────────────────────
+    auto* title = new QLabel("POKER", this);
+    title->setObjectName("titleLabel");
+    title->setAlignment(Qt::AlignCenter);
+
+    auto* subtitle = new QLabel("CONFIGURE TABLE", this);
+    subtitle->setObjectName("subtitleLabel");
+    subtitle->setAlignment(Qt::AlignCenter);
+
+    col->addWidget(title);
+    col->addWidget(subtitle);
+
+    // Divider
+    auto* divider = new QFrame(this);
+    divider->setObjectName("divider");
+    divider->setFixedWidth(360);
+    col->addWidget(divider, 0, Qt::AlignHCenter);
+
+    // ── Players group ──────────────────────────────────────────────────────
+    auto* slotsGroup = new QGroupBox("PLAYERS", this);
+    slotsGroup->setFixedWidth(440);
     mSlotsLayout = new QVBoxLayout(slotsGroup);
-    root->addWidget(slotsGroup);
+    mSlotsLayout->setSpacing(8);
+    mSlotsLayout->setContentsMargins(12, 8, 12, 12);
+    col->addWidget(slotsGroup, 0, Qt::AlignHCenter);
 
+    // Add/remove buttons
     auto* slotBtnRow = new QHBoxLayout;
-    mAddBtn    = new QPushButton("+ Add player", this);
-    mRemoveBtn = new QPushButton("- Remove last", this);
+    slotBtnRow->setSpacing(10);
+    mAddBtn = new QPushButton("+ Add player", this);
+    mAddBtn->setObjectName("addBtn");
+    mRemoveBtn = new QPushButton("− Remove last", this);
+    mRemoveBtn->setObjectName("removeBtn");
     slotBtnRow->addWidget(mAddBtn);
     slotBtnRow->addWidget(mRemoveBtn);
-    root->addLayout(slotBtnRow);
+    slotBtnRow->addStretch();
 
+    auto* slotBtnWrapper = new QWidget(this);
+    slotBtnWrapper->setFixedWidth(440);
+    slotBtnWrapper->setLayout(slotBtnRow);
+    col->addWidget(slotBtnWrapper, 0, Qt::AlignHCenter);
+
+    // ── Starting chips ─────────────────────────────────────────────────────
     auto* chipsRow = new QHBoxLayout;
-    chipsRow->addWidget(new QLabel("Starting chips:", this));
+    chipsRow->setSpacing(12);
+    auto* chipsLbl = new QLabel("STARTING CHIPS", this);
+    chipsLbl->setObjectName("sectionLabel");
     mChipsBox = new QSpinBox(this);
     mChipsBox->setRange(100, 1'000'000);
     mChipsBox->setValue(10000);
     mChipsBox->setSingleStep(1000);
+    chipsRow->addWidget(chipsLbl);
+    chipsRow->addStretch();
     chipsRow->addWidget(mChipsBox);
-    root->addLayout(chipsRow);
 
-    mStartBtn = new QPushButton("Start Game", this);
-    mStartBtn->setStyleSheet("QPushButton { background: #27ae60; color: white; padding: 8px; font-size: 14px; border-radius: 4px; }");
-    root->addWidget(mStartBtn);
+    auto* chipsWrapper = new QWidget(this);
+    chipsWrapper->setFixedWidth(440);
+    chipsWrapper->setLayout(chipsRow);
+    col->addWidget(chipsWrapper, 0, Qt::AlignHCenter);
 
+    // Divider
+    auto* divider2 = new QFrame(this);
+    divider2->setObjectName("divider");
+    divider2->setFixedWidth(360);
+    col->addWidget(divider2, 0, Qt::AlignHCenter);
+
+    // ── Start button ───────────────────────────────────────────────────────
+    mStartBtn = new QPushButton("START GAME", this);
+    mStartBtn->setObjectName("startBtn");
+    mStartBtn->setFixedWidth(280);
+    col->addWidget(mStartBtn, 0, Qt::AlignHCenter);
+
+    // ── Connections ────────────────────────────────────────────────────────
     connect(mAddBtn,    &QPushButton::clicked, this, &SetupWidget::addPlayerSlot);
     connect(mRemoveBtn, &QPushButton::clicked, this, &SetupWidget::removeLastSlot);
     connect(mStartBtn,  &QPushButton::clicked, this, &SetupWidget::onStartClicked);
@@ -62,46 +122,51 @@ SetupWidget::SetupWidget(QWidget* parent) : QWidget(parent) {
 void SetupWidget::buildSlotRow(int index) {
     auto* row    = new QWidget(this);
     auto* layout = new QHBoxLayout(row);
-    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setContentsMargins(4, 4, 4, 4);
+    layout->setSpacing(10);
 
     bool isHuman = mConfigs[index].isHuman;
     auto* label  = new QLabel(isHuman ? "You (Human)" : QString("Seat %1").arg(index + 1), row);
-    label->setMinimumWidth(100);
+    label->setObjectName("nameLabel");
+    label->setMinimumWidth(110);
     layout->addWidget(label);
 
     if (!isHuman) {
         auto* combo = new QComboBox(row);
-        combo->addItem("Random",    static_cast<int>(PlayerConfig::StrategyType::Random));
-        combo->addItem("MonteCarlo",static_cast<int>(PlayerConfig::StrategyType::MonteCarlo));
-        combo->addItem("GA",        static_cast<int>(PlayerConfig::StrategyType::GA));
-        combo->setCurrentIndex(2); // default GA
+        combo->addItem("Random",     static_cast<int>(PlayerConfig::StrategyType::Random));
+        combo->addItem("MonteCarlo", static_cast<int>(PlayerConfig::StrategyType::MonteCarlo));
+        combo->addItem("GA",         static_cast<int>(PlayerConfig::StrategyType::GA));
+        combo->setCurrentIndex(2);
         layout->addWidget(combo);
 
         auto* fileBtn   = new QPushButton("Load genome...", row);
         auto* fileLabel = new QLabel("(none)", row);
-        fileLabel->setStyleSheet("color: #888;");
+        fileLabel->setObjectName("fileLabel");
         layout->addWidget(fileBtn);
         layout->addWidget(fileLabel);
 
         connect(combo, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
             [fileBtn, fileLabel, combo](int) {
-                bool isGA = combo->currentData().toInt() == static_cast<int>(PlayerConfig::StrategyType::GA);
+                bool isGA = combo->currentData().toInt() ==
+                            static_cast<int>(PlayerConfig::StrategyType::GA);
                 fileBtn->setVisible(isGA);
                 fileLabel->setVisible(isGA);
             });
 
         connect(fileBtn, &QPushButton::clicked, this, [this, index, fileLabel]() {
-            QString path = QFileDialog::getOpenFileName(this, "Load Genome", "", "Genome files (*.genome)");
+            QString path = QFileDialog::getOpenFileName(
+                this, "Load Genome", "", "Genome files (*.genome)");
             if (!path.isEmpty()) {
                 mConfigs[index].genomePath = path;
                 fileLabel->setText(QFileInfo(path).fileName());
-                fileLabel->setStyleSheet("color: #27ae60;");
+                fileLabel->setStyleSheet("color: #70d898; font-size: 11px;");
             }
         });
 
         connect(combo, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
             [this, index, combo](int) {
-                mConfigs[index].strategy = static_cast<PlayerConfig::StrategyType>(combo->currentData().toInt());
+                mConfigs[index].strategy =
+                    static_cast<PlayerConfig::StrategyType>(combo->currentData().toInt());
             });
     }
 

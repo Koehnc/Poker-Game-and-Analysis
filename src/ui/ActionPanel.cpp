@@ -3,25 +3,43 @@
 #include <QPushButton>
 #include <QSpinBox>
 #include <QHBoxLayout>
+#include <QVBoxLayout>
 #include <QLabel>
 #include <algorithm>
 
 namespace poker {
 
 ActionPanel::ActionPanel(QWidget* parent) : QWidget(parent) {
-    mFoldBtn  = new QPushButton("Fold",  this);
-    mCallBtn  = new QPushButton("Call",  this);
-    mRaiseBtn = new QPushButton("Raise", this);
-    mBetBox   = new QSpinBox(this);
+    mFoldBtn  = new QPushButton("FOLD",  this);
+    mCallBtn  = new QPushButton("CHECK", this);
+    mRaiseBtn = new QPushButton("RAISE", this);
+
+    mFoldBtn->setObjectName("foldBtn");
+    mCallBtn->setObjectName("callBtn");
+    mRaiseBtn->setObjectName("raiseBtn");
+
+    mBetBox = new QSpinBox(this);
     mBetBox->setMinimum(1);
     mBetBox->setMaximum(1'000'000);
+    mBetBox->setFixedWidth(110);
+
+    auto* betLabel = new QLabel("BET", this);
+    betLabel->setObjectName("sectionLabel");
+
+    // Raise sub-row: button + label + spinbox
+    auto* raiseRow = new QHBoxLayout;
+    raiseRow->setSpacing(8);
+    raiseRow->setContentsMargins(0, 0, 0, 0);
+    raiseRow->addWidget(mRaiseBtn, 1);
+    raiseRow->addWidget(betLabel);
+    raiseRow->addWidget(mBetBox);
 
     auto* layout = new QHBoxLayout(this);
-    layout->addWidget(mFoldBtn);
-    layout->addWidget(mCallBtn);
-    layout->addWidget(mRaiseBtn);
-    layout->addWidget(new QLabel("Bet:", this));
-    layout->addWidget(mBetBox);
+    layout->setSpacing(12);
+    layout->setContentsMargins(0, 6, 0, 6);
+    layout->addWidget(mFoldBtn, 1);
+    layout->addWidget(mCallBtn, 1);
+    layout->addLayout(raiseRow, 2);
 
     connect(mFoldBtn,  &QPushButton::clicked, this, &ActionPanel::onFold);
     connect(mCallBtn,  &QPushButton::clicked, this, &ActionPanel::onCall);
@@ -36,7 +54,9 @@ void ActionPanel::activate(int minToCall, int pot, int playerStack) {
     mBetBox->setValue(std::max(minToCall * 2, defaultRaise));
     mBetBox->setMaximum(playerStack);
 
-    mCallBtn->setText(minToCall > 0 ? QString("Call $%1").arg(minToCall) : "Check");
+    mCallBtn->setText(minToCall > 0
+        ? QString("CALL  $%1").arg(minToCall)
+        : "CHECK");
 
     setEnabled(true);
 }

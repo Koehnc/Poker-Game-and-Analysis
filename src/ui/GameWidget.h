@@ -5,6 +5,7 @@
 #include <QVector>
 
 class QLabel;
+class QFrame;
 class QVBoxLayout;
 class QHBoxLayout;
 
@@ -23,18 +24,21 @@ signals:
     void actionChosen(poker::Action action);
 
 private:
-    QString cardText(const Card& c) const;
+    static QFrame* makeCardWidget(QWidget* parent);
+    void setCardFace(QFrame* card, const Card& c);
+    void setCardBack(QFrame* card);
+    void clearCard(QFrame* card);
 
     int          mHumanIndex;
     QStringList  mPlayerNames;
 
-    QVector<QLabel*> mChipLabels;
-    QLabel*          mBoardLabel;
-    QLabel*          mPotLabel;
-    QLabel*          mHumanHandLabel;
-    QLabel*          mHumanChipsLabel;
-    QLabel*          mStatusLabel;
-    ActionPanel*     mActionPanel;
+    QVector<QLabel*>  mChipLabels;       // one per opponent, in order
+    QVector<QFrame*>  mBoardCards;       // 5 community card slots
+    QVector<QFrame*>  mHumanCards;       // 2 hole card slots
+    QLabel*           mPotLabel      = nullptr;
+    QLabel*           mHumanChipsLabel = nullptr;
+    QLabel*           mStatusLabel   = nullptr;
+    ActionPanel*      mActionPanel   = nullptr;
 };
 
 } // namespace poker

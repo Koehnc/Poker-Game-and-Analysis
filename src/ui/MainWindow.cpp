@@ -17,7 +17,8 @@ namespace poker {
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     setWindowTitle("Poker");
-    resize(800, 600);
+    resize(1100, 740);
+    setMinimumSize(800, 600);
 
     mStack       = new QStackedWidget(this);
     mSetupWidget = new SetupWidget(this);
@@ -93,21 +94,30 @@ void MainWindow::onGameStartRequested(QVector<poker::PlayerConfig> players, int 
 }
 
 void MainWindow::stopGame() {
+    if (!mGameThread) return;
+
+    // Unblock HumanStrategy if it's waiting on a CV for user input.
+    if (mHumanStrat)
+        mHumanStrat->provideAction(Action{ActionType::Fold, 0});
+
     if (mController) mController->stop();
-    if (mGameThread) {
-        mGameThread->quit();
-        mGameThread->wait(3000);
-        delete mGameThread;
-        mGameThread = nullptr;
+    mGameThread->quit();
+    if (!mGameThread->wait(3000)) {
+        mGameThread->terminate();
+        mGameThread->wait();
     }
+
+    delete mController;
+    mController = nullptr;
+    delete mGameThread;
+    mGameThread = nullptr;
+
     if (mGameWidget) {
         mStack->removeWidget(mGameWidget);
         delete mGameWidget;
         mGameWidget = nullptr;
     }
-    // mController deleted by thread cleanup (moveToThread transfers ownership)
-    mController = nullptr;
-    // mHumanStrat owned by strategies vector inside Poker — already deleted above
+
     mHumanStrat = nullptr;
 }
 
