@@ -74,6 +74,24 @@ namespace poker {
         return mPlayers[playerIndex].getChips();
     }
 
+    void Poker::setStepCallback(StepCallback cb)
+    {
+        mStepCallback = std::move(cb);
+    }
+
+    void Poker::emitStep(StepKind kind, Round round, const ActionRecord* action)
+    {
+        if (!mStepCallback) return;
+        HandStep step;
+        step.kind = kind;
+        step.round = round;
+        step.board = mBoard;
+        step.pot = mPot;
+        step.dealerIndex = mDealerIndex;
+        if (action) step.action = *action;
+        mStepCallback(step);
+    }
+
     void Poker::restartGame()
     {
         mBoard.clear();
@@ -103,6 +121,7 @@ namespace poker {
         std::vector<ActionRecord> streetHistory;
 
         deal();
+        emitStep(StepKind::HandStarted, poker::Round::Preflop);
 
         if (!mQuiet) std::cout << "First round bets" << std::endl;
         betsIn(mDealerIndex + 3, poker::Round::Preflop, &streetHistory);
@@ -116,6 +135,7 @@ namespace poker {
         }
 
         flop();
+        emitStep(StepKind::StreetDealt, poker::Round::Flop);
 
         if (!mQuiet) std::cout << "Second round bets" << std::endl;
         betsIn(mDealerIndex + 1, poker::Round::Flop, &streetHistory);
@@ -129,6 +149,7 @@ namespace poker {
         }
 
         turn();
+        emitStep(StepKind::StreetDealt, poker::Round::Turn);
 
         if (!mQuiet) std::cout << "Third round bets" << std::endl;
         betsIn(mDealerIndex + 1, poker::Round::Turn, &streetHistory);
@@ -142,6 +163,7 @@ namespace poker {
         }
 
         river();
+        emitStep(StepKind::StreetDealt, poker::Round::River);
 
         if (!mQuiet) std::cout << "Final round bets" << std::endl;
         betsIn(mDealerIndex + 1, poker::Round::River, &streetHistory);
@@ -168,6 +190,7 @@ namespace poker {
             state.board = mBoard;
             state.minToCall = mMinCall - mBetsFromPlayers[j];
             state.playerPosition = j;
+            state.dealerIndex = mDealerIndex;
             state.currentBetterInd = mCurrentBetter;
             if (mCurrentBetter != -1) state.currentBetterStats = mPlayers[mCurrentBetter].mPlayerStats;
             state.playerHand = mPlayers[j].getHand();
@@ -179,6 +202,7 @@ namespace poker {
             int betSize = action.amount;
 
             streetHistory->emplace_back(ActionRecord{ j, round, action.type, action.amount, mPot, mPreviousStreetAggressor, mCurrentBetter } );
+            emitStep(StepKind::PlayerActed, round, &streetHistory->back());
 
             if (action.type == ActionType::Fold)
             {   

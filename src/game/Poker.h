@@ -8,6 +8,7 @@
 #include <vector>
 #include <memory>
 #include <random>
+#include <functional>
 
 namespace poker {
     class Poker {
@@ -15,10 +16,14 @@ namespace poker {
             static const unsigned int BigBlind = 2;
             static const unsigned int SmallBlind = 1;
 
+            using StepCallback = std::function<void(const HandStep&)>;
+
             Poker(int numPlayers, int startingMoney, bool quiet=false);
             Poker(std::vector<std::unique_ptr<IStrategy>> strategies, int startingMoney, bool quiet=false);
             void restartGame();
             int simHand(); //#ThisIsBasicallyTheRunner
+
+            void setStepCallback(StepCallback cb);
 
             std::vector<ActionRecord>* betsIn(int startingPosition, poker::Round round, std::vector<ActionRecord> *streetHistory);
             void collectStats(std::vector<ActionRecord>* handHistory);
@@ -42,6 +47,8 @@ namespace poker {
             void savePlayerStats();
 
         private:
+            void emitStep(StepKind kind, Round round, const ActionRecord* action = nullptr);
+
             int mNumPlayers;
             std::vector<Player> mPlayers;
             std::vector<bool> mActivePlayers;
@@ -55,6 +62,7 @@ namespace poker {
             int mCurrentBetter;
             int mPreviousStreetAggressor;
             std::vector<Card> mBoard;
+            StepCallback mStepCallback;
     };
 }
 

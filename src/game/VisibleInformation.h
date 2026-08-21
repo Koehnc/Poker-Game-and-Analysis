@@ -71,12 +71,13 @@ namespace poker
         int lastStreetAggressor;
     };
 
-    struct GameStateView 
+    struct GameStateView
     {
         std::vector<Card> board;
         int pot;
         int minToCall;
         int playerPosition;
+        int dealerIndex;
         int currentBetterInd;   // -1, no bet present
         PlayerStats currentBetterStats;
         int playerStack;
@@ -85,6 +86,18 @@ namespace poker
 
         int numRemainingPlayers;    // Eventually this could be gotten rid of and the strategies can parse the actionHistory
         std::vector<ActionRecord> actionHistory;
+    };
+
+    enum class StepKind { HandStarted, PlayerActed, StreetDealt };
+
+    struct HandStep
+    {
+        StepKind kind;
+        Round round;
+        std::vector<Card> board;
+        int pot;
+        int dealerIndex;
+        ActionRecord action;   // only meaningful when kind == StepKind::PlayerActed
     };
 }
 
