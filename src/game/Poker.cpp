@@ -95,6 +95,8 @@ namespace poker {
     void Poker::restartGame()
     {
         mBoard.clear();
+        mWinnerHoleCards.clear();
+        mWinningCards.clear();
         mPot = 0;
         mMinCall = BigBlind;
         ++mDealerIndex %= mNumPlayers;
@@ -171,6 +173,14 @@ namespace poker {
         collectStats(&streetHistory);
         if (!mQuiet) printTable();
 
+        // Only reveal for a genuine showdown — river betting can still fold
+        // everyone down to one player, same as the earlier streets.
+        if (!onlyOnePerson())
+        {
+            mWinnerHoleCards = mPlayers[winner].getHand();
+            mWinningCards = Hand(mBoard, mWinnerHoleCards).getBestFive();
+        }
+
         mPlayers[winner].payout(mPot);
         // std::cout << "Player " << winner+1 << " won " << mPot << std::endl;
         return winner;
@@ -197,6 +207,10 @@ namespace poker {
             state.pot = mPot;
             state.numRemainingPlayers = numActivePlayers;
             state.round = round;
+
+            ActionRecord actor;
+            actor.playerId = j;
+            emitStep(StepKind::PlayerToAct, round, &actor);
 
             Action action = mPlayers[j].getAction(state);
             int betSize = action.amount;

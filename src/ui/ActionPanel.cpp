@@ -59,6 +59,7 @@ void ActionPanel::activate(int minToCall, int pot, int playerStack) {
         : "CHECK");
 
     setEnabled(true);
+    mFoldBtn->setEnabled(minToCall > 0);
 }
 
 void ActionPanel::deactivate() {

@@ -88,7 +88,7 @@ namespace poker
         std::vector<ActionRecord> actionHistory;
     };
 
-    enum class StepKind { HandStarted, PlayerActed, StreetDealt };
+    enum class StepKind { HandStarted, PlayerToAct, PlayerActed, StreetDealt };
 
     struct HandStep
     {
@@ -97,7 +97,9 @@ namespace poker
         std::vector<Card> board;
         int pot;
         int dealerIndex;
-        ActionRecord action;   // only meaningful when kind == StepKind::PlayerActed
+        // Meaningful when kind == PlayerActed (full record) or
+        // kind == PlayerToAct (only action.playerId is set).
+        ActionRecord action;
     };
 }
 

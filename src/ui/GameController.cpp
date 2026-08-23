@@ -4,8 +4,9 @@
 namespace poker {
 
 namespace {
-    constexpr int kOpponentActionPauseMs = 600;
-    constexpr int kStreetDealtPauseMs = 800;
+    constexpr int kOpponentActionPauseMs = 900;
+    constexpr int kStreetDealtPauseMs = 1300;
+    constexpr int kHandCompletePauseMs = 2500;
 }
 
 GameController::GameController(std::vector<std::unique_ptr<IStrategy>> strategies,
@@ -23,7 +24,7 @@ GameController::GameController(std::vector<std::unique_ptr<IStrategy>> strategie
 
         if (!mRunning.load()) return;   // stopping — don't pace, drain fast
 
-        if (step.kind == StepKind::PlayerActed && step.action.playerId != mHumanIndex) {
+        if (step.kind == StepKind::PlayerToAct && step.action.playerId != mHumanIndex) {
             QThread::msleep(kOpponentActionPauseMs);
         } else if (step.kind == StepKind::StreetDealt) {
             QThread::msleep(kStreetDealtPauseMs);
@@ -41,8 +42,10 @@ void GameController::run() {
         for (int i = 0; i < mNumPlayers; ++i)
             chips.push_back(mPoker->getPlayerChips(i));
 
-        emit handComplete(winner, chips);
-        QThread::msleep(800);
+        emit handComplete(winner, chips, mPoker->getWinnerHoleCards(), mPoker->getWinningCards());
+        if (mRunning.load()) {   // stopping — don't pace, drain fast
+            QThread::msleep(kHandCompletePauseMs);
+        }
     }
     emit gameOver();
 }

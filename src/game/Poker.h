@@ -43,6 +43,12 @@ namespace poker {
             double getMonteEquity(unsigned int numSims, unsigned int playerIndex);
             int getPlayerChips(int playerIndex) const;
 
+            // Populated only when the hand reached a genuine showdown (i.e. more than
+            // one player was still active at the river) — empty for an uncontested
+            // win where everyone else folded, since there's nothing to reveal.
+            std::vector<Card> getWinnerHoleCards() const { return mWinnerHoleCards; }
+            std::vector<Card> getWinningCards() const { return mWinningCards; }
+
             void printTable();
             void printPlayers();
             void savePlayerStats();
@@ -64,6 +70,8 @@ namespace poker {
             int mPreviousStreetAggressor;
             std::vector<Card> mBoard;
             StepCallback mStepCallback;
+            std::vector<Card> mWinnerHoleCards;
+            std::vector<Card> mWinningCards;
     };
 }
 

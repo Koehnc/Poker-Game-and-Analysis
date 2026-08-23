@@ -24,7 +24,9 @@ public slots:
 
 signals:
     void stepOccurred(poker::HandStep step);
-    void handComplete(int winner, QVector<int> chipCounts);
+    void handComplete(int winner, QVector<int> chipCounts,
+                       std::vector<poker::Card> winnerHoleCards,
+                       std::vector<poker::Card> winningCards);
     void gameOver();
 
 private:
