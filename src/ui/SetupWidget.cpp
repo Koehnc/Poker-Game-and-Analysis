@@ -109,12 +109,12 @@ SetupWidget::SetupWidget(QWidget* parent) : QWidget(parent) {
     connect(mRemoveBtn, &QPushButton::clicked, this, &SetupWidget::removeLastSlot);
     connect(mStartBtn,  &QPushButton::clicked, this, &SetupWidget::onStartClicked);
 
-    // Default: human + 1 GA opponent
+    // Default: human + 1 Random opponent
     PlayerConfig human; human.isHuman = true;
     mConfigs.push_back(human);
     buildSlotRow(0);
 
-    PlayerConfig ai; ai.strategy = PlayerConfig::StrategyType::GA;
+    PlayerConfig ai; ai.strategy = PlayerConfig::StrategyType::Random;
     mConfigs.push_back(ai);
     buildSlotRow(1);
 }
@@ -136,7 +136,7 @@ void SetupWidget::buildSlotRow(int index) {
         combo->addItem("Random",     static_cast<int>(PlayerConfig::StrategyType::Random));
         combo->addItem("MonteCarlo", static_cast<int>(PlayerConfig::StrategyType::MonteCarlo));
         combo->addItem("GA",         static_cast<int>(PlayerConfig::StrategyType::GA));
-        combo->setCurrentIndex(2);
+        combo->setCurrentIndex(static_cast<int>(mConfigs[index].strategy));
         layout->addWidget(combo);
 
         auto* fileBtn   = new QPushButton("Load genome...", row);
