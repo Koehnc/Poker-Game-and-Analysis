@@ -1001,3 +1001,9 @@ Expected: the "D"/"SB"/"BB" badges render as small gold pills matching the exist
 git add src/ui/Theme.h
 git commit -m "style: theme dealer/blind badges and history log panel"
 ```
+
+## Known issues (found in manual smoke test, not yet fixed)
+
+- **Hand doesn't end when action folds around to the last player.** Playing as small blind, everyone else folded to me and the game kept running as if more players were live, instead of awarding me the pot and starting a new hand. Likely a missing/incorrect single-active-player check in `Poker::simHand` (or wherever `numActivePlayers` is evaluated) — needs to end the hand and pay out as soon as only one active player remains, not just when a betting round completes normally.
+- **Duplicate strategy names aren't disambiguated.** In `MainWindow::onGameStartRequested` (src/ui/MainWindow.cpp), non-human players are named directly after their strategy type (`"Random"`, `"MonteCarlo"`), so two Random opponents both show up as "Random" with no way to tell them apart in the history log or badges. Needs a per-type counter/suffix (e.g. "Random 1", "Random 2") when the same strategy is configured more than once.
+- **No way to leave a game once it's started.** `MainWindow::stopGame()` already does the right cleanup (stops `GameController`, joins the thread, tears down `GameWidget`) and is called from the destructor and from `onGameStartRequested` before starting a new game, but nothing in the UI triggers it otherwise — there's no back/menu/restart button anywhere in `GameWidget` or `ActionPanel`. Closing the app is currently the only way out of a running game. Needs a button (or similar) that calls `stopGame()` and switches `mStack` back to `mSetupWidget`.

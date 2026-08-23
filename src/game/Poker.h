@@ -2,12 +2,14 @@
 #define POKER_H
 
 #include "game/Player.h"
+#include "game/VisibleInformation.h"
 #include "core/Deck.h"
 #include "core/Card.h"
 #include "strategies/IStrategy.h"
 #include <vector>
 #include <memory>
 #include <random>
+#include <functional>
 
 namespace poker {
     class Poker {
@@ -15,10 +17,14 @@ namespace poker {
             static const unsigned int BigBlind = 2;
             static const unsigned int SmallBlind = 1;
 
+            using StepCallback = std::function<void(const HandStep&)>;
+
             Poker(int numPlayers, int startingMoney, bool quiet=false);
             Poker(std::vector<std::unique_ptr<IStrategy>> strategies, int startingMoney, bool quiet=false);
             void restartGame();
             int simHand(); //#ThisIsBasicallyTheRunner
+
+            void setStepCallback(StepCallback cb);
 
             std::vector<ActionRecord>* betsIn(int startingPosition, poker::Round round, std::vector<ActionRecord> *streetHistory);
             void collectStats(std::vector<ActionRecord>* handHistory);
@@ -37,11 +43,19 @@ namespace poker {
             double getMonteEquity(unsigned int numSims, unsigned int playerIndex);
             int getPlayerChips(int playerIndex) const;
 
+            // Populated only when the hand reached a genuine showdown (i.e. more than
+            // one player was still active at the river) — empty for an uncontested
+            // win where everyone else folded, since there's nothing to reveal.
+            std::vector<Card> getWinnerHoleCards() const { return mWinnerHoleCards; }
+            std::vector<Card> getWinningCards() const { return mWinningCards; }
+
             void printTable();
             void printPlayers();
             void savePlayerStats();
 
         private:
+            void emitStep(StepKind kind, Round round, const ActionRecord* action = nullptr);
+
             int mNumPlayers;
             std::vector<Player> mPlayers;
             std::vector<bool> mActivePlayers;
@@ -55,6 +69,9 @@ namespace poker {
             int mCurrentBetter;
             int mPreviousStreetAggressor;
             std::vector<Card> mBoard;
+            StepCallback mStepCallback;
+            std::vector<Card> mWinnerHoleCards;
+            std::vector<Card> mWinningCards;
     };
 }
 

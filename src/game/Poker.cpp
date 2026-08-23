@@ -74,9 +74,29 @@ namespace poker {
         return mPlayers[playerIndex].getChips();
     }
 
+    void Poker::setStepCallback(StepCallback cb)
+    {
+        mStepCallback = std::move(cb);
+    }
+
+    void Poker::emitStep(StepKind kind, Round round, const ActionRecord* action)
+    {
+        if (!mStepCallback) return;
+        HandStep step;
+        step.kind = kind;
+        step.round = round;
+        step.board = mBoard;
+        step.pot = mPot;
+        step.dealerIndex = mDealerIndex;
+        if (action) step.action = *action;
+        mStepCallback(step);
+    }
+
     void Poker::restartGame()
     {
         mBoard.clear();
+        mWinnerHoleCards.clear();
+        mWinningCards.clear();
         mPot = 0;
         mMinCall = BigBlind;
         ++mDealerIndex %= mNumPlayers;
@@ -103,6 +123,7 @@ namespace poker {
         std::vector<ActionRecord> streetHistory;
 
         deal();
+        emitStep(StepKind::HandStarted, poker::Round::Preflop);
 
         if (!mQuiet) std::cout << "First round bets" << std::endl;
         betsIn(mDealerIndex + 3, poker::Round::Preflop, &streetHistory);
@@ -116,6 +137,7 @@ namespace poker {
         }
 
         flop();
+        emitStep(StepKind::StreetDealt, poker::Round::Flop);
 
         if (!mQuiet) std::cout << "Second round bets" << std::endl;
         betsIn(mDealerIndex + 1, poker::Round::Flop, &streetHistory);
@@ -129,6 +151,7 @@ namespace poker {
         }
 
         turn();
+        emitStep(StepKind::StreetDealt, poker::Round::Turn);
 
         if (!mQuiet) std::cout << "Third round bets" << std::endl;
         betsIn(mDealerIndex + 1, poker::Round::Turn, &streetHistory);
@@ -142,12 +165,21 @@ namespace poker {
         }
 
         river();
+        emitStep(StepKind::StreetDealt, poker::Round::River);
 
         if (!mQuiet) std::cout << "Final round bets" << std::endl;
         betsIn(mDealerIndex + 1, poker::Round::River, &streetHistory);
         winner = getWinner();
         collectStats(&streetHistory);
         if (!mQuiet) printTable();
+
+        // Only reveal for a genuine showdown — river betting can still fold
+        // everyone down to one player, same as the earlier streets.
+        if (!onlyOnePerson())
+        {
+            mWinnerHoleCards = mPlayers[winner].getHand();
+            mWinningCards = Hand(mBoard, mWinnerHoleCards).getBestFive();
+        }
 
         mPlayers[winner].payout(mPot);
         // std::cout << "Player " << winner+1 << " won " << mPot << std::endl;
@@ -168,6 +200,7 @@ namespace poker {
             state.board = mBoard;
             state.minToCall = mMinCall - mBetsFromPlayers[j];
             state.playerPosition = j;
+            state.dealerIndex = mDealerIndex;
             state.currentBetterInd = mCurrentBetter;
             if (mCurrentBetter != -1) state.currentBetterStats = mPlayers[mCurrentBetter].mPlayerStats;
             state.playerHand = mPlayers[j].getHand();
@@ -175,13 +208,17 @@ namespace poker {
             state.numRemainingPlayers = numActivePlayers;
             state.round = round;
 
+            ActionRecord actor;
+            actor.playerId = j;
+            emitStep(StepKind::PlayerToAct, round, &actor);
+
             Action action = mPlayers[j].getAction(state);
             int betSize = action.amount;
 
             streetHistory->emplace_back(ActionRecord{ j, round, action.type, action.amount, mPot, mPreviousStreetAggressor, mCurrentBetter } );
 
             if (action.type == ActionType::Fold)
-            {   
+            {
                 if (!mQuiet) std::cout << "Player " << j+1 << " Folded" << std::endl;
                 mActivePlayers[j] = false;
                 --numActivePlayers;
@@ -210,6 +247,8 @@ namespace poker {
                 startingPosition = j;
                 i = j;
             }
+
+            emitStep(StepKind::PlayerActed, round, &streetHistory->back());
         }
 
         // Some of this might be redundant with restart

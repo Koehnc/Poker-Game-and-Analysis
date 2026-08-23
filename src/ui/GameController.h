@@ -4,6 +4,7 @@
 #include "ui/HumanStrategy.h"
 #include <QObject>
 #include <QVector>
+#include <atomic>
 #include <memory>
 #include <vector>
 
@@ -14,6 +15,7 @@ class GameController : public QObject {
 public:
     GameController(std::vector<std::unique_ptr<IStrategy>> strategies,
                    int startingChips,
+                   int humanIndex,
                    QObject* parent = nullptr);
 
 public slots:
@@ -21,13 +23,17 @@ public slots:
     void stop();
 
 signals:
-    void handComplete(int winner, QVector<int> chipCounts);
+    void stepOccurred(poker::HandStep step);
+    void handComplete(int winner, QVector<int> chipCounts,
+                       std::vector<poker::Card> winnerHoleCards,
+                       std::vector<poker::Card> winningCards);
     void gameOver();
 
 private:
     std::unique_ptr<Poker> mPoker;
     int                    mNumPlayers;
-    bool                   mRunning = false;
+    int                    mHumanIndex;
+    std::atomic<bool>      mRunning{false};
 };
 
 } // namespace poker

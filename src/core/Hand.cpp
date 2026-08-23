@@ -40,6 +40,33 @@ namespace poker
         return mHandValue;
     }
 
+    std::vector<Card> Hand::getBestFive()
+    {
+        int n = (int)mCards.size();
+        if (n <= 5) return mCards;
+
+        std::vector<bool> selector(n, false);
+        std::fill(selector.begin(), selector.begin() + 5, true);
+
+        std::vector<Card> best;
+        long long bestValue = -1;
+        do
+        {
+            std::vector<Card> subset;
+            for (int i = 0; i < n; ++i)
+                if (selector[i]) subset.push_back(mCards[i]);
+
+            long long value = Hand(subset).getHandValue();
+            if (value > bestValue)
+            {
+                bestValue = value;
+                best = subset;
+            }
+        } while (std::prev_permutation(selector.begin(), selector.end()));
+
+        return best;
+    }
+
     long long Hand::calcHandValue()
     {
         long long handValue = 0;

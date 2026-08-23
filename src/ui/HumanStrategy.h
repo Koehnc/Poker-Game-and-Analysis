@@ -12,6 +12,7 @@ class HumanStrategy : public QObject, public IStrategy {
 public:
     explicit HumanStrategy(QObject* parent = nullptr);
     Action decide(const GameStateView& state) override;
+    void abort();
 
 public slots:
     void provideAction(poker::Action action);
@@ -24,6 +25,7 @@ private:
     std::condition_variable mCv;
     Action                  mPendingAction{};
     bool                    mActionReady = false;
+    bool                    mAborted = false;
 };
 
 } // namespace poker

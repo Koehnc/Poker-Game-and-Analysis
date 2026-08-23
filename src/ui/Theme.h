@@ -28,19 +28,17 @@ QFrame#boardFrame {
         fx:0.5, fy:0.4,
         stop:0 #124528, stop:0.6 #0b3019, stop:1 #071c0f);
     border: 3px solid #1d5e35;
-    border-radius: 52px;
+    border-radius: 120px;
 }
 
 QFrame#opponentSeat {
-    background-color: #111118;
-    border: 1px solid #1e2030;
-    border-radius: 12px;
+    background-color: transparent;
+    border: none;
 }
 
 QFrame#humanSeat {
-    background-color: #0d1812;
-    border: 2px solid #1d5e35;
-    border-radius: 12px;
+    background-color: transparent;
+    border: none;
 }
 
 QFrame#divider {
@@ -215,6 +213,7 @@ QLabel#sectionLabel {
 }
 
 QLabel#potLabel {
+    background-color: transparent;
     font-family: "Georgia";
     font-size: 20px;
     color: #c4991f;
@@ -276,6 +275,56 @@ QScrollBar::handle:vertical {
     min-height: 24px;
 }
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
+
+/* ────────────────────────────── Badges ─────────────────────────────────── */
+
+QLabel#dealerDot {
+    background-color: #f5f0e8;
+    border: 1px solid #c8c0b0;
+    border-radius: 9px;
+    color: #1a1a1a;
+    font-size: 8px;
+    font-weight: bold;
+}
+QLabel#sbDot, QLabel#bbDot {
+    background-color: #3a6fd8;
+    border: 1px solid #2a4fa8;
+    border-radius: 9px;
+    color: #f5f0e8;
+    font-size: 8px;
+    font-weight: bold;
+}
+
+/* ─────────────────────────── History log ───────────────────────────────── */
+
+QListWidget#historyLog {
+    background-color: #111118;
+    border: 1px solid #1e2030;
+    border-radius: 10px;
+    padding: 8px;
+}
+QListWidget#historyLog::item {
+    color: #a8a294;
+    font-size: 12px;
+    padding: 3px 2px;
+    border: none;
+}
+
+/* ─────────────────────────── Outcome bubble ─────────────────────────────── */
+
+QListWidget#outcomeLog {
+    background-color: #111118;
+    border: 1px solid #c4991f;
+    border-radius: 10px;
+    padding: 8px;
+}
+QListWidget#outcomeLog::item {
+    color: #d4a830;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 3px 2px;
+    border: none;
+}
 
 )");
 }

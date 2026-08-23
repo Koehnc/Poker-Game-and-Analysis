@@ -16,6 +16,12 @@ namespace poker
 
             long long getHandValue();
 
+            // Brute-forces the best-scoring 5-card subset of the hand's cards
+            // (there are at most C(7,5) = 21 to try), reusing the same scoring
+            // as getHandValue() rather than tracking which cards contributed
+            // to each hand type.
+            std::vector<Card> getBestFive();
+
 
         private:
             long long calcHandValue();

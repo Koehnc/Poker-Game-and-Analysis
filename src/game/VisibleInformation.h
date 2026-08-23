@@ -59,24 +59,25 @@ namespace poker
         int amount; // only used for Bet/Raise
     };
 
-    struct ActionRecord 
+    struct ActionRecord
     {
-        int playerId;
-        Round round;         // preflop, flop, turn, river
-        ActionType action;  // Fold, Call, Raise, Check
-        int amount;        // for bets/raises
+        int playerId = 0;
+        Round round = Round::Preflop;         // preflop, flop, turn, river
+        ActionType action = ActionType::Fold;  // Fold, Call, Raise, Check
+        int amount = 0;        // for bets/raises
 
-        int pot;
-        int lastAggressor;
-        int lastStreetAggressor;
+        int pot = 0;
+        int lastAggressor = -1;
+        int lastStreetAggressor = -1;
     };
 
-    struct GameStateView 
+    struct GameStateView
     {
         std::vector<Card> board;
         int pot;
         int minToCall;
         int playerPosition;
+        int dealerIndex;
         int currentBetterInd;   // -1, no bet present
         PlayerStats currentBetterStats;
         int playerStack;
@@ -85,6 +86,20 @@ namespace poker
 
         int numRemainingPlayers;    // Eventually this could be gotten rid of and the strategies can parse the actionHistory
         std::vector<ActionRecord> actionHistory;
+    };
+
+    enum class StepKind { HandStarted, PlayerToAct, PlayerActed, StreetDealt };
+
+    struct HandStep
+    {
+        StepKind kind;
+        Round round;
+        std::vector<Card> board;
+        int pot;
+        int dealerIndex;
+        // Meaningful when kind == PlayerActed (full record) or
+        // kind == PlayerToAct (only action.playerId is set).
+        ActionRecord action;
     };
 }
 

@@ -25,4 +25,14 @@ void HumanStrategy::provideAction(poker::Action action) {
     mCv.notify_one();
 }
 
+void HumanStrategy::abort() {
+    {
+        std::lock_guard<std::mutex> lock(mMutex);
+        mAborted = true;
+        mActionReady = true;
+        mPendingAction = Action{ActionType::Fold, 0};
+    }
+    mCv.notify_one();
+}
+
 } // namespace poker
