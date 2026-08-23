@@ -1,0 +1,10 @@
+# Build output
+build/
+*.log
+out.exe
+
+# Claude Code worktrees
+.claude/worktrees/
+
+# Superpowers ephemeral session state
+.superpowers/
