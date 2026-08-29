@@ -59,8 +59,13 @@ namespace poker
 
     void Deck::remove(Card card)
     {
-        auto cardInd = std::find(mCards.begin(), mCards.end(), card);
-        if (cardInd != mCards.end()) mCards.erase(mCards.begin(), cardInd);
+        // Card::operator== only compares rank (intentional — Hand's straight
+        // detection relies on that to collapse same-rank duplicates), so an
+        // exact match here needs rank and suit checked explicitly.
+        auto cardInd = std::find_if(mCards.begin(), mCards.end(), [&card](const Card& c) {
+            return c.getRank() == card.getRank() && c.getSuit() == card.getSuit();
+        });
+        if (cardInd != mCards.end()) mCards.erase(cardInd);
     }
 
     int Deck::getSize()
