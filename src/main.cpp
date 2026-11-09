@@ -11,9 +11,9 @@
 int main(int argc, char* argv[]) {
 
     //Control
-    bool geneticAlgorithm = true;
+    bool geneticAlgorithm = false;
     bool pokerGame = false;
-    bool rangeCreation = false;
+    bool rangeCreation = true;
 
     // Genetic Algorithm things
     if (geneticAlgorithm)
@@ -95,7 +95,7 @@ int main(int argc, char* argv[]) {
                 hand.clear();
             }
         }
-        range.saveToFile("HandProbability.txt");
+        range.saveToFile("../Data/Ranges/HandProbability.txt");
     }
 
     // More Range creation things

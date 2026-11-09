@@ -11,8 +11,8 @@ namespace poker
     {
         public:
             // MonteCarloEvaluator() : suspectedRange(new Range("Ranges/PreflopRandomMonteEquityRange5Op.txt")) {};
-            // MonteCarloEvaluator() : suspectedRange(new Range("Ranges/EqualRandomProbRange.txt")) {};
-            MonteCarloEvaluator() : suspectedRange(std::make_unique<Range>("data/Ranges/Strength.txt")) {};
+            MonteCarloEvaluator() : suspectedRange(new Range("Ranges/EqualRandomProbRange.txt")) {};
+            // MonteCarloEvaluator() : suspectedRange(std::make_unique<Range>("data/Ranges/Strength.txt")) {};
             double evaluate(const GameStateView& state) override;
         private:
             std::unique_ptr<Range> suspectedRange;

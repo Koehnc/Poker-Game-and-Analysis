@@ -53,7 +53,7 @@ namespace poker
         PostFlopStats postFlopStats;
     };
 
-    struct Action 
+    struct Action
     {
         ActionType type;
         int amount; // only used for Bet/Raise
