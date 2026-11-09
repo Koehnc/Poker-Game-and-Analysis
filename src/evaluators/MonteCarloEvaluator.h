@@ -10,8 +10,8 @@ namespace poker
     class MonteCarloEvaluator : public IEvaluator
     {
         public:
-            // MonteCarloEvaluator() : suspectedRange(new Range("Ranges/PreflopRandomMonteEquityRange5Op.txt")) {};
-            MonteCarloEvaluator() : suspectedRange(new Range("Ranges/EqualRandomProbRange.txt")) {};
+            // MonteCarloEvaluator() : suspectedRange(new Range("data/Ranges/PreflopRandomMonteEquityRange5Op.txt")) {};
+            MonteCarloEvaluator() : suspectedRange(new Range("data/Ranges/EqualRandomProbRange.txt")) {};
             // MonteCarloEvaluator() : suspectedRange(std::make_unique<Range>("data/Ranges/Strength.txt")) {};
             double evaluate(const GameStateView& state) override;
         private:

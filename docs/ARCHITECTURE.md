@@ -239,6 +239,17 @@ Nothing exercises `Card`, `Deck`, `Hand`, `Poker`, any strategy, `Range`, `Range
 - `Player::saveToFile()` prints the wrong type via `typeid` on a `unique_ptr`.
 - Hand doesn't end when action folds around to the last player (tracked separately, not yet root-caused).
 
+**Suspected bugs (found by code reading 2026-11-10, not yet confirmed by a test):**
+- `Hand::getStraight()` never detects the wheel (A-2-3-4-5): the Ace is moved to the front, but `rank % 14 + 1` gives 1 (compared against 2) and the `+2/+3/+4` checks still use rank 14. `getStraightFlush()` has the same check.
+- `Hand::getStraight()` / `getStraightFlush()` return the *lowest* qualifying run (the loop scans low→high and returns the first match), so 4-5-6-7-8-9 scores as an 8-high straight.
+- `Hand::getFullHouse()` scans low→high, so with two candidate trips (333-777-x) or two candidate pairs (22-555-77) it picks the lower one.
+- `Hand::getFlush()` returns only the top card and no kickers are added, so A♥K♥… and A♥2♥… flushes tie (and the tie goes to the lower seat index).
+- `Hand::getStraightFlush()` can miss a straight flush when a rank is paired: `std::unique` collapses same-rank cards and may keep the off-suit one.
+- `Range::sampleHand()` hardcodes suits (suited = suit 0+0, offsuit/pairs = suit 0+1), so opponents can be dealt identical cards or cards already on the board/in hero's hand (`Deck::remove` silently no-ops). It also constructs a `std::random_device` + `std::mt19937` on every call.
+- `MonteCarloEvaluator::evaluate()` counts ties as a hero win (hero is index 0 and the comparison is a strict `>`), inflating equity; ties should count as split equity.
+- `Individual`'s new helper-input and gene fields (`equity`, `handStrength`, `percievedAggression`, `aggression`, `bluffFrequency`) are uninitialized.
+- `Poker::savePlayerStats()` only saves player 0 (other players' loop is commented out) — possibly intentional.
+
 **Fixed:**
 - `Deck::remove()` used to erase the wrong range and could match the wrong suit (rank-only comparison) — now removes exactly the matched card via an explicit rank+suit lookup.
 
